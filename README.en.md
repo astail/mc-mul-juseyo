@@ -30,7 +30,7 @@ MulJuseyo times each player individually and **gently reminds them in chat (and 
 
 ## Installation
 
-1. Drop `MulJuseyo-1.0.0.jar` into `plugins/` and restart.
+1. Drop `MulJuseyo-2.0.0.jar` into `plugins/` and restart.
 2. Reminders are OFF by default. Each player who wants them runs `/muljuseyo on`, then gets notified every interval (60 minutes by default).
 
 Example:
@@ -94,7 +94,7 @@ message: "水を飲んでください！"  # the reminder body text
 ## Build
 
 ```bash
-./deploy.sh        # macOS native (JDK 25 + Maven). Output: target/MulJuseyo-1.0.0.jar
+./deploy.sh        # macOS native (JDK 25 + Maven). Output: target/MulJuseyo-2.0.0.jar
 # or
 mvn -B clean package
 ```
