@@ -32,8 +32,6 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
             case "drink", "ok" -> requirePlayer(sender, plugin::drinkNow);
             case "mute" -> requirePlayer(sender, player -> setMute(player, true));
             case "unmute" -> requirePlayer(sender, player -> setMute(player, false));
-            case "on" -> { if (requireManage(sender)) setActive(sender, true); }
-            case "off" -> { if (requireManage(sender)) setActive(sender, false); }
             case "reload" -> { if (requireManage(sender)) doReload(sender); }
             case "status" -> sendStatus(sender);
             default -> sendUsage(sender);
@@ -48,11 +46,6 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(mute
                 ? info("水分補給リマインドをミュートしました（/muljuseyo unmute で解除）。")
                 : ok("水分補給リマインドのミュートを解除しました。"));
-    }
-
-    private void setActive(CommandSender sender, boolean value) {
-        plugin.setActive(value);
-        sender.sendMessage(ok("水分補給リマインドを " + (value ? "ON" : "OFF") + " にしました。"));
     }
 
     private void doReload(CommandSender sender) {
@@ -77,7 +70,6 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(info("/muljuseyo mute | unmute    - 自分への通知を停止 / 再開"));
         sender.sendMessage(info("/muljuseyo status           - 現在の設定を表示"));
         if (sender.hasPermission("muljuseyo.manage")) {
-            sender.sendMessage(info("/muljuseyo on | off         - リマインドの全体 有効 / 無効"));
             sender.sendMessage(info("/muljuseyo reload           - 設定を再読み込み"));
         }
     }
@@ -88,7 +80,7 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
         if (sender.hasPermission("muljuseyo.manage")) {
             return true;
         }
-        sender.sendMessage(error("この操作（on / off / reload）はサーバー管理者のみ実行できます。"));
+        sender.sendMessage(error("この操作（reload）はサーバー管理者のみ実行できます。"));
         return false;
     }
 
@@ -119,8 +111,6 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             List<String> subs = new ArrayList<>(List.of("drink", "status", "mute", "unmute"));
             if (sender.hasPermission("muljuseyo.manage")) {
-                subs.add("on");
-                subs.add("off");
                 subs.add("reload");
             }
             return prefix(subs, args[0]);
