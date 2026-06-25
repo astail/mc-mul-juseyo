@@ -36,8 +36,8 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
 
     /** プレイヤーごとの「次に通知する時刻」（epoch ミリ秒）。在席中のみ保持し、退出で破棄する。 */
     private final Map<UUID, Long> nextAt = new HashMap<>();
-    /** /muljuseyo mute で通知を一時停止しているプレイヤー（永続化しない＝再起動でリセット）。 */
-    private final Set<UUID> muted = new HashSet<>();
+    /** /muljuseyo on で通知を受け取ることにしたプレイヤー（オプトイン）。既定 OFF。この時点では永続化しない（#3）。 */
+    private final Set<UUID> notifyEnabled = new HashSet<>();
 
     private boolean active;
     private int intervalMinutes;
@@ -69,7 +69,7 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
     public void onDisable() {
         stopTask();
         nextAt.clear();
-        muted.clear();
+        notifyEnabled.clear();
     }
 
     /**
@@ -140,8 +140,8 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
             if (now < due) {
                 continue;
             }
-            // 期限到来。ミュート / 権限なしなら通知だけ飛ばし、次回はそのまま積み直す（沈黙が貯まらない）。
-            if (!muted.contains(id) && player.hasPermission("muljuseyo.notify")) {
+            // 期限到来。opt-in（on）かつ権限ありのときだけ通知。OFF / 権限なしは飛ばすだけで次回は積み直す（沈黙が貯まらない）。
+            if (notifyEnabled.contains(id) && player.hasPermission("muljuseyo.notify")) {
                 sendReminder(player);
             }
             nextAt.put(id, now + intervalMillis());
@@ -150,23 +150,23 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
 
     // ───────────────────────── イベント ─────────────────────────
 
-    /** ログイン時に初回の通知時刻を仕込む。remind-on-join なら即時に 1 回通知する。 */
+    /** ログイン時に初回の通知時刻を仕込む。opt-in 済みで remind-on-join なら即時に 1 回通知する。 */
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        UUID id = player.getUniqueId();
         long now = System.currentTimeMillis();
-        if (active && remindOnJoin && player.hasPermission("muljuseyo.notify")) {
+        if (active && remindOnJoin && notifyEnabled.contains(id) && player.hasPermission("muljuseyo.notify")) {
             sendReminder(player);
         }
-        nextAt.put(player.getUniqueId(), now + intervalMillis());
+        nextAt.put(id, now + intervalMillis());
     }
 
-    /** 退出時に保持していた状態を破棄してメモリリークを防ぐ。 */
+    /** 退出時に次回通知時刻を破棄してメモリリークを防ぐ。opt-in 状態（notifyEnabled）は再ログインに備えて維持する。 */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID id = event.getPlayer().getUniqueId();
         nextAt.remove(id);
-        muted.remove(id);
     }
 
     // ───────────────────────── 通知ロジック ─────────────────────────
@@ -225,15 +225,18 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
         return notifySound;
     }
 
-    public boolean isMuted(Player player) {
-        return muted.contains(player.getUniqueId());
+    public boolean isNotifyEnabled(Player player) {
+        return notifyEnabled.contains(player.getUniqueId());
     }
 
-    public void setMuted(Player player, boolean mute) {
-        if (mute) {
-            muted.add(player.getUniqueId());
+    public void setNotifyEnabled(Player player, boolean enabled) {
+        UUID id = player.getUniqueId();
+        if (enabled) {
+            notifyEnabled.add(id);
+            // ON 化直後に、ためていた期限で即通知が飛ばないよう次回を「今 + 間隔」へ積み直す。
+            nextAt.put(id, System.currentTimeMillis() + intervalMillis());
         } else {
-            muted.remove(player.getUniqueId());
+            notifyEnabled.remove(id);
         }
     }
 

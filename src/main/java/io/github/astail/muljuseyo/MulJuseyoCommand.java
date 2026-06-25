@@ -29,9 +29,9 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "drink", "ok" -> requirePlayer(sender, plugin::drinkNow);
-            case "mute" -> requirePlayer(sender, player -> setMute(player, true));
-            case "unmute" -> requirePlayer(sender, player -> setMute(player, false));
+            case "on" -> requirePlayer(sender, player -> setNotify(player, true));
+            case "off" -> requirePlayer(sender, player -> setNotify(player, false));
+            case "drink" -> requirePlayer(sender, plugin::drinkNow);
             case "reload" -> { if (requireManage(sender)) doReload(sender); }
             case "status" -> sendStatus(sender);
             default -> sendUsage(sender);
@@ -41,11 +41,11 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
 
     // ───────────── サブコマンド ─────────────
 
-    private void setMute(Player player, boolean mute) {
-        plugin.setMuted(player, mute);
-        player.sendMessage(mute
-                ? info("水分補給リマインドをミュートしました（/muljuseyo unmute で解除）。")
-                : ok("水分補給リマインドのミュートを解除しました。"));
+    private void setNotify(Player player, boolean enabled) {
+        plugin.setNotifyEnabled(player, enabled);
+        player.sendMessage(enabled
+                ? ok("通知をONにしました。次の通知は " + plugin.getIntervalMinutes() + " 分後です。")
+                : ok("通知をOFFにしました。"));
     }
 
     private void doReload(CommandSender sender) {
@@ -59,15 +59,16 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
                 + " / ログイン時通知 " + (plugin.isRemindOnJoin() ? "あり" : "なし")
                 + " / 通知音 " + (plugin.isNotifySound() ? "あり" : "なし")));
         if (sender instanceof Player player) {
-            sender.sendMessage(info("あなたの通知: " + (plugin.isMuted(player) ? "ミュート中"
-                    : "次の通知まで残り約 " + plugin.minutesUntilNext(player) + " 分")));
+            sender.sendMessage(info("あなたの通知: " + (plugin.isNotifyEnabled(player)
+                    ? "ON（次まで約 " + plugin.minutesUntilNext(player) + " 分）"
+                    : "OFF")));
         }
         sendUsage(sender);
     }
 
     private void sendUsage(CommandSender sender) {
+        sender.sendMessage(info("/muljuseyo on | off         - 自分への通知を ON / OFF（既定 OFF）"));
         sender.sendMessage(info("/muljuseyo drink            - 水分補給を記録してタイマーをリセット"));
-        sender.sendMessage(info("/muljuseyo mute | unmute    - 自分への通知を停止 / 再開"));
         sender.sendMessage(info("/muljuseyo status           - 現在の設定を表示"));
         if (sender.hasPermission("muljuseyo.manage")) {
             sender.sendMessage(info("/muljuseyo reload           - 設定を再読み込み"));
@@ -109,7 +110,7 @@ public final class MulJuseyoCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> subs = new ArrayList<>(List.of("drink", "status", "mute", "unmute"));
+            List<String> subs = new ArrayList<>(List.of("on", "off", "drink", "status"));
             if (sender.hasPermission("muljuseyo.manage")) {
                 subs.add("reload");
             }
