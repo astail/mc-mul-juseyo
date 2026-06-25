@@ -1,0 +1,20 @@
+# ───────────────────────────────────────────────
+#  MulJuseyo 設定ファイル
+# ───────────────────────────────────────────────
+
+# enabled: 水分補給リマインドを行うかどうか。
+#          /muljuseyo on | off でも切り替えられます（その場合この値も書き換わります）。
+enabled: true
+
+# interval-minutes: 何分ごとに「水を飲んでください」と通知するか（最小 1・最大 1440）。
+#                   既定は 60 分（1 時間に 1 度）。
+interval-minutes: 60
+
+# remind-on-join: ログイン直後にも一度通知するか。false ならログインから interval-minutes 後が初回。
+remind-on-join: false
+
+# notify-sound: 通知時にベル音を鳴らすかどうか。
+notify-sound: true
+
+# message: 通知に表示するメッセージ本文。
+message: "水を飲んでください！"

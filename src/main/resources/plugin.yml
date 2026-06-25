@@ -1,0 +1,25 @@
+name: MulJuseyo
+version: 1.0.0
+main: io.github.astail.muljuseyo.MulJuseyoPlugin
+description: "1 時間に 1 度「水を飲んでください」と本人へ通知するプラグインです。"
+api-version: '26.1.2'
+author: astail
+
+commands:
+  muljuseyo:
+    description: "水分補給リマインドの確認・設定を行います。"
+    usage: "/muljuseyo <status|drink|mute|unmute|on|off|reload>"
+    aliases: [mj, water]
+    permission: muljuseyo.use
+    permission-message: "§cこのコマンドを実行する権限がありません。"
+
+permissions:
+  muljuseyo.notify:
+    description: "水分補給リマインドを受け取ることを許可します。"
+    default: true
+  muljuseyo.use:
+    description: "/muljuseyo で確認・自分の設定（status / drink / mute）を行うことを許可します。"
+    default: true
+  muljuseyo.manage:
+    description: "/muljuseyo on|off|reload など、サーバー全体に影響する操作を許可します。"
+    default: op
