@@ -213,19 +213,6 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
         return active;
     }
 
-    public void setActive(boolean value) {
-        this.active = value;
-        getConfig().set("enabled", value);
-        saveConfig();
-        // ON に戻したとき、無効中に過ぎた期限で一斉通知しないよう次回を積み直す。
-        if (value) {
-            long now = System.currentTimeMillis();
-            for (Player player : getServer().getOnlinePlayers()) {
-                nextAt.put(player.getUniqueId(), now + intervalMillis());
-            }
-        }
-    }
-
     public int getIntervalMinutes() {
         return intervalMinutes;
     }
