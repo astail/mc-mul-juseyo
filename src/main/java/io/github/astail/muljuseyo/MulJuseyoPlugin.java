@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,8 +15,12 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -36,7 +41,7 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
 
     /** プレイヤーごとの「次に通知する時刻」（epoch ミリ秒）。在席中のみ保持し、退出で破棄する。 */
     private final Map<UUID, Long> nextAt = new HashMap<>();
-    /** /muljuseyo on で通知を受け取ることにしたプレイヤー（オプトイン）。既定 OFF。この時点では永続化しない（#3）。 */
+    /** /muljuseyo on で通知を受け取ることにしたプレイヤー（オプトイン）。既定 OFF。players.yml に永続化する。 */
     private final Set<UUID> notifyEnabled = new HashSet<>();
 
     private boolean active;
@@ -46,6 +51,8 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
     private String message;
 
     private BukkitTask task;
+    /** オプトイン状態の永続化先（<dataFolder>/players.yml）。loadPlayers() で初期化される。 */
+    private File playersFile;
 
     @Override
     public void onEnable() {
@@ -55,6 +62,7 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
             // コマンド登録に失敗した場合は disablePlugin 済み。task の起動も成功ログも出さずに離脱する。
             return;
         }
+        loadPlayers();
         // /reload 等で既にオンラインのプレイヤーがいる場合に備えてスケジュールしておく。
         long now = System.currentTimeMillis();
         for (Player player : getServer().getOnlinePlayers()) {
@@ -68,6 +76,8 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         stopTask();
+        // クリアより先に保存する（空集合で上書きしないため）。
+        savePlayers();
         nextAt.clear();
         notifyEnabled.clear();
     }
@@ -99,6 +109,43 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
         remindOnJoin = config.getBoolean("remind-on-join", false);
         notifySound = config.getBoolean("notify-sound", true);
         message = config.getString("message", "水を飲んでください！");
+    }
+
+    // ───────────────────────── オプトイン状態の永続化 ─────────────────────────
+
+    /** players.yml から opt-in（notify-enabled）の UUID 群を読み込む。ファイルが無ければ空のまま。 */
+    private void loadPlayers() {
+        playersFile = new File(getDataFolder(), "players.yml");
+        notifyEnabled.clear();
+        if (!playersFile.exists()) {
+            return;
+        }
+        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(playersFile);
+        for (String raw : yaml.getStringList("notify-enabled")) {
+            try {
+                notifyEnabled.add(UUID.fromString(raw));
+            } catch (IllegalArgumentException ex) {
+                getLogger().warning("players.yml の不正な UUID をスキップします: " + raw);
+            }
+        }
+    }
+
+    /** opt-in（notify-enabled）の UUID 群を players.yml へ保存する。初期化前（loadPlayers 未実行）は何もしない。 */
+    private void savePlayers() {
+        if (playersFile == null) {
+            return;
+        }
+        List<String> ids = new ArrayList<>(notifyEnabled.size());
+        for (UUID id : notifyEnabled) {
+            ids.add(id.toString());
+        }
+        YamlConfiguration yaml = new YamlConfiguration();
+        yaml.set("notify-enabled", ids);
+        try {
+            yaml.save(playersFile);
+        } catch (IOException ex) {
+            getLogger().warning("players.yml の保存に失敗しました: " + ex.getMessage());
+        }
     }
 
     private static long clamp(long value, long min, long max) {
@@ -238,6 +285,7 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
         } else {
             notifyEnabled.remove(id);
         }
+        savePlayers();
     }
 
     /** 本人の次回通知までの残り分（切り上げ）。スケジュール前や期限超過時は 0。 */
