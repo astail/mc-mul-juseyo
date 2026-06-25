@@ -1,5 +1,5 @@
 name: MulJuseyo
-version: 1.0.0
+version: 2.0.0
 main: io.github.astail.muljuseyo.MulJuseyoPlugin
 description: "1 時間に 1 度「水を飲んでください」と本人へ通知するプラグインです。"
 api-version: '26.1.2'
