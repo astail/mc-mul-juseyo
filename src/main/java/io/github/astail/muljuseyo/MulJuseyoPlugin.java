@@ -51,7 +51,10 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         loadSettings();
-        register();
+        if (!register()) {
+            // コマンド登録に失敗した場合は disablePlugin 済み。task の起動も成功ログも出さずに離脱する。
+            return;
+        }
         // /reload 等で既にオンラインのプレイヤーがいる場合に備えてスケジュールしておく。
         long now = System.currentTimeMillis();
         for (Player player : getServer().getOnlinePlayers()) {
@@ -69,18 +72,22 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
         muted.clear();
     }
 
-    /** plugin.yml のコマンドとリスナーを登録する。失敗時はプラグインを無効化する。 */
-    private void register() {
+    /**
+     * plugin.yml のコマンドとリスナーを登録する。
+     * 成功時は true、コマンド未定義でプラグインを無効化した場合は false を返す。
+     */
+    private boolean register() {
         PluginCommand command = getCommand("muljuseyo");
         if (command == null) {
             getLogger().severe("plugin.yml に muljuseyo コマンドが定義されていません。プラグインを無効化します。");
             getServer().getPluginManager().disablePlugin(this);
-            return;
+            return false;
         }
         MulJuseyoCommand handler = new MulJuseyoCommand(this);
         command.setExecutor(handler);
         command.setTabCompleter(handler);
         getServer().getPluginManager().registerEvents(this, this);
+        return true;
     }
 
     /** config.yml を読み直して設定値を反映する。 */
