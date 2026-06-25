@@ -182,8 +182,9 @@ public final class MulJuseyoPlugin extends JavaPlugin implements Listener {
     }
 
     /**
-     * 今すぐ本人へリマインドを送り、次回の通知時刻を「今 + 間隔」へリセットする（/muljuseyo drink 用）。
-     * 「飲んだ」申告として使えるよう、タイマーを巻き戻す。
+     * 「水を飲んだ」申告を記録する（/muljuseyo drink 用）。
+     * 次回の通知時刻を「今 + 間隔」へリセットしてタイマーを巻き戻し、本人へ確認メッセージを送る。
+     * リマインド自体は送らない。
      */
     public void drinkNow(Player player) {
         nextAt.put(player.getUniqueId(), System.currentTimeMillis() + intervalMillis());
