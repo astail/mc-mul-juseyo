@@ -8,18 +8,18 @@ author: astail
 commands:
   muljuseyo:
     description: "水分補給リマインドの確認・設定を行います。"
-    usage: "/muljuseyo <status|drink|mute|unmute|on|off|reload>"
+    usage: "/muljuseyo <status|drink|on|off|reload>"
     aliases: [mj, water]
     permission: muljuseyo.use
     permission-message: "§cこのコマンドを実行する権限がありません。"
 
 permissions:
   muljuseyo.notify:
-    description: "水分補給リマインドを受け取ることを許可します。"
+    description: "水分補給リマインドを受け取れるかどうか（受信可否）。通知を ON にしていても、これが無いと届きません。"
     default: true
   muljuseyo.use:
-    description: "/muljuseyo で確認・自分の設定（status / drink / mute）を行うことを許可します。"
+    description: "/muljuseyo の自分向け操作（status / drink / on / off）を許可します。"
     default: true
   muljuseyo.manage:
-    description: "/muljuseyo on|off|reload など、サーバー全体に影響する操作を許可します。"
+    description: "/muljuseyo reload など、サーバー全体に影響する操作を許可します。"
     default: op
