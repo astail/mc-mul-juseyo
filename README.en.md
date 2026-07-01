@@ -24,7 +24,7 @@ MulJuseyo times each player individually and **gently reminds them in chat (and 
 
 ## Requirements
 
-- Server: Paper 26.1.2 (build 69+)
+- Server: Paper 26.2 (experimental channel)
 - Java: 25
 - Clients: vanilla (no mods, server-side only)
 
